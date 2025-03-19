@@ -1,18 +1,34 @@
+import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import AuthForm from "./auth/AuthForm";
+import Dashboard from "./pages/Dashboard";
+import { getCurrentUser, signOut } from "./auth/AuthService";
+import type { User } from "@supabase/supabase-js"; // ✅ Richtiger Import!
 
+export default function App() {
+  // 🔹 Fix: useState korrekt mit `User | null` initialisieren
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
 
-import './App.css'
+  useEffect(() => {
+    async function checkUser() {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      if (currentUser) navigate("/dashboard");
+    }
+    checkUser();
+  }, []);
 
-function App() {
-
+  const handleLogout = async () => {
+    await signOut();
+    setUser(null);
+    navigate("/");
+  };
 
   return (
-    <>
-      <div className="bg-first text-fourth text-[34px] h-screen flex items-center justify-center">
-        <h1>ToDO</h1>
-
-       </div>
-    </>
-  )
+    <Routes>
+      <Route path="/" element={user ? <Dashboard onLogout={handleLogout} /> : <AuthForm />} />
+      <Route path="/dashboard" element={user ? <Dashboard onLogout={handleLogout} /> : <AuthForm />} />
+    </Routes>
+  );
 }
-
-export default App
